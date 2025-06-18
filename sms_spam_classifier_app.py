@@ -18,8 +18,9 @@ NLTK_DATA_DIR = "/tmp/nltk_data" # A common writable directory for NLTK data in 
 if not os.path.exists(NLTK_DATA_DIR):
     os.makedirs(NLTK_DATA_DIR, exist_ok=True)
 
-# Add the custom data directory to NLTK's search path
-# This is crucial to ensure NLTK can find the downloaded data
+# Set NLTK_DATA environment variable and add to NLTK's search path EARLY
+# This is crucial to ensure NLTK can find the downloaded data from the start
+os.environ["NLTK_DATA"] = NLTK_DATA_DIR
 nltk.data.path.append(NLTK_DATA_DIR)
 
 # --- Download NLTK data (Crucial for deployment) ---
@@ -31,10 +32,12 @@ def download_nltk_data_safe():
     """
     try:
         # Download to the specified directory using download_dir argument
-        # Removed quiet=True temporarily for better error visibility if downloads fail
+        # Removed quiet=True for better error visibility in Streamlit logs
+        print(f"Attempting to download NLTK data to: {NLTK_DATA_DIR}")
         nltk.download('stopwords', download_dir=NLTK_DATA_DIR)
         nltk.download('wordnet', download_dir=NLTK_DATA_DIR)
         nltk.download('punkt', download_dir=NLTK_DATA_DIR)
+        print("NLTK data download complete.")
         return True
     except Exception as e:
         # Print the exception to the console for debugging in Streamlit logs
@@ -54,13 +57,8 @@ if not nltk_data_ready:
 # Initialize NLTK components for preprocessing
 ps = PorterStemmer()
 wordnet_lemmatizer = WordNetLemmatizer()
-# Ensure stopwords are loaded from the correct path after download
-try:
-    stop_words = set(stopwords.words('english'))
-except LookupError:
-    st.error("NLTK stopwords data not found. This should have been downloaded. "
-             "Please check your deployment logs for NLTK download errors.")
-    st.stop()
+# This should now load correctly as data path is set and download attempted
+stop_words = set(stopwords.words('english'))
 
 
 # --- Load Model and Vectorizer ---
