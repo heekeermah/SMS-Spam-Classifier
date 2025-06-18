@@ -16,6 +16,14 @@ nltk.data.path.append(NLTK_DATA_DIR)
 # --- Cache NLTK downloads to avoid repeated fetching ---
 @st.cache_resource
 def ensure_nltk_resources():
+    # Clean corrupted or mislocated punkt_tab references (if any)
+    from pathlib import Path
+    punkt_tab_path = Path(NLTK_DATA_DIR) / "tokenizers" / "punkt_tab"
+    if punkt_tab_path.exists():
+        import shutil
+        shutil.rmtree(punkt_tab_path)  # Remove broken directory
+
+    # Now ensure correct downloads
     required = {
         "punkt": "tokenizers/punkt",
         "stopwords": "corpora/stopwords",
