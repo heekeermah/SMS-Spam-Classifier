@@ -3,6 +3,7 @@ import streamlit as st
 import joblib
 import re
 import nltk
+import os # Import os for path manipulation and environment variables
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from nltk.stem import WordNetLemmatizer
@@ -11,18 +12,25 @@ from nltk.tokenize import word_tokenize
 # --- Configuration ---
 MODEL_PATH = "spam_classifier.pkl"
 VECTORIZER_PATH = "vectorizer.pkl"
+NLTK_DATA_DIR = "/tmp/nltk_data" # A common writable directory for NLTK data in cloud environments
+
+# Ensure the NLTK data directory exists and set NLTK_DATA environment variable
+if not os.path.exists(NLTK_DATA_DIR):
+    os.makedirs(NLTK_DATA_DIR, exist_ok=True)
+os.environ["NLTK_DATA"] = NLTK_DATA_DIR # Set NLTK_DATA environment variable
 
 # --- Download NLTK data (Crucial for deployment) ---
 @st.cache_resource(show_spinner=False) # Hide spinner for NLTK download
 def download_nltk_data_safe():
     """
-    Attempts to download necessary NLTK data.
+    Attempts to download necessary NLTK data to a specified directory.
     Returns True on success, False on failure.
     """
     try:
-        nltk.download('stopwords', quiet=True)
-        nltk.download('wordnet', quiet=True)
-        nltk.download('punkt', quiet=True)
+        # Download to the specified directory using download_dir argument
+        nltk.download('stopwords', download_dir=NLTK_DATA_DIR, quiet=True)
+        nltk.download('wordnet', download_dir=NLTK_DATA_DIR, quiet=True)
+        nltk.download('punkt', download_dir=NLTK_DATA_DIR, quiet=True)
         return True
     except Exception:
         # Just return False, let the main app handle the error display
@@ -79,7 +87,7 @@ def preprocess_text(text):
     text = text.lower()
 
     # 2. Tokenization
-    words = word_tokenize(text)
+    words = word_tokenize(text) # This will now correctly look for punkt data in NLTK_DATA_DIR
 
     # 3. Removing non-alphabetic characters and 4. Stop word removal
     # The notebook's approach combines this with lemmatization for efficiency
@@ -92,7 +100,7 @@ def preprocess_text(text):
     return " ".join(processed_words)
 
 # --- Streamlit UI ---
-st.set_page_config(page_title="SMS Spam Classifier", page_icon="📩")
+st.set_page_config(page_title="SMS Spam Classifier", page_icon="�")
 
 st.markdown("""
     <style>
