@@ -1,4 +1,5 @@
 # app.py
+
 import streamlit as st
 import joblib
 import os
@@ -9,27 +10,28 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
-# --- Set up NLTK cache directory ---
+# --- Set up NLTK data path (for compatibility with Streamlit Cloud) ---
 NLTK_DATA_DIR = "/tmp/nltk_data"
 os.makedirs(NLTK_DATA_DIR, exist_ok=True)
 os.environ["NLTK_DATA"] = NLTK_DATA_DIR
 nltk.data.path.append(NLTK_DATA_DIR)
 
-# --- Clean and Download Required NLTK Resources ---
+# --- Clean and safely download required NLTK data ---
 @st.cache_resource
 def setup_nltk_resources():
-    # Delete any corrupted 'punkt_tab' references
+    # Fix corrupted or unexpected "punkt_tab" path
     punkt_tab_path = Path(NLTK_DATA_DIR) / "tokenizers" / "punkt_tab"
     if punkt_tab_path.exists():
         shutil.rmtree(punkt_tab_path)
 
-    # Ensure required resources are downloaded
-    resources = {
+    # Ensure proper resources are downloaded
+    required_resources = {
         "punkt": "tokenizers/punkt",
         "stopwords": "corpora/stopwords",
         "wordnet": "corpora/wordnet"
     }
-    for resource, lookup_path in resources.items():
+
+    for resource, lookup_path in required_resources.items():
         try:
             nltk.data.find(lookup_path)
         except LookupError:
@@ -37,7 +39,7 @@ def setup_nltk_resources():
 
 setup_nltk_resources()
 
-# --- Load Model and Vectorizer ---
+# --- Load trained model and vectorizer ---
 @st.cache_resource
 def load_classifier_and_vectorizer():
     try:
@@ -50,7 +52,7 @@ def load_classifier_and_vectorizer():
 
 model, vectorizer = load_classifier_and_vectorizer()
 
-# --- Preprocessing Function ---
+# --- Text preprocessing function ---
 def preprocess_text(text):
     if not isinstance(text, str):
         return ""
@@ -58,17 +60,22 @@ def preprocess_text(text):
     lemmatizer = WordNetLemmatizer()
     stop_words = set(stopwords.words("english"))
 
+    # Lowercase
     text = text.lower()
+
+    # Tokenize
     words = word_tokenize(text)
 
+    # Remove stopwords and lemmatize
     cleaned = [
         lemmatizer.lemmatize(word)
-        for word in words if word.isalpha() and word not in stop_words
+        for word in words
+        if word.isalpha() and word not in stop_words
     ]
 
     return " ".join(cleaned)
 
-# --- Streamlit UI ---
+# --- Streamlit App UI ---
 st.set_page_config(page_title="SMS Spam Classifier", page_icon="📩")
 
 st.markdown("<h1 style='text-align: center;'>📩 SMS Spam Classifier</h1>", unsafe_allow_html=True)
@@ -82,8 +89,13 @@ if st.button("Classify"):
         st.warning("Please enter a message to classify.")
     else:
         try:
+            # Preprocess input
             cleaned_text = preprocess_text(user_input)
+
+            # Vectorize
             input_vector = vectorizer.transform([cleaned_text])
+
+            # Predict
             prediction = model.predict(input_vector)
 
             if prediction[0] == 1:
@@ -95,4 +107,4 @@ if st.button("Classify"):
             st.error(f"An error occurred during classification: {e}")
 
 st.markdown("---")
-st.markdown("Created using Streamlit and Machine Learning (MultinomialNB + CountVectorizer).")
+st.markdown("🔍 Built using Streamlit and Machine Learning (MultinomialNB + CountVectorizer).")
