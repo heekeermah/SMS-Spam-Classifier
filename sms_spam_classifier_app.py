@@ -58,8 +58,12 @@ if not nltk_data_ready:
 ps = PorterStemmer()
 wordnet_lemmatizer = WordNetLemmatizer()
 # This should now load correctly as data path is set and download attempted
-stop_words = set(stopwords.words('english'))
-
+def preprocess_text(text):
+    try:
+        stop_words = set(stopwords.words('english'))
+    except LookupError:
+        nltk.download('stopwords', download_dir=NLTK_DATA_DIR)
+        stop_words = set(stopwords.words('english'))
 
 # --- Load Model and Vectorizer ---
 @st.cache_resource # Cache the loading of the model and vectorizer
