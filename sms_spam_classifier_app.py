@@ -13,24 +13,28 @@ MODEL_PATH = "spam_classifier.pkl"
 VECTORIZER_PATH = "vectorizer.pkl"
 
 # --- Download NLTK data (Crucial for deployment) ---
-@st.cache_resource
-def download_nltk_data():
+@st.cache_resource(show_spinner=False) # Hide spinner for NLTK download
+def download_nltk_data_safe():
     """
-    Downloads necessary NLTK data. Wrapped in st.cache_resource
-    to ensure it runs only once per app deployment.
+    Attempts to download necessary NLTK data.
+    Returns True on success, False on failure.
     """
     try:
         nltk.download('stopwords', quiet=True)
         nltk.download('wordnet', quiet=True)
         nltk.download('punkt', quiet=True)
         return True
-    except Exception as e:
-        st.error(f"Failed to download NLTK data: {e}")
-        st.stop() # Stop the app if NLTK data cannot be downloaded
-    return False
+    except Exception:
+        # Just return False, let the main app handle the error display
+        return False
 
-# Call the function to ensure NLTK data is downloaded at startup
-download_nltk_data()
+# Attempt to download NLTK data at startup
+nltk_data_ready = download_nltk_data_safe()
+
+# If NLTK data failed to download, display an error and stop the app
+if not nltk_data_ready:
+    st.error("Failed to download necessary NLTK data. Please check your internet connection or deployment logs.")
+    st.stop()
 
 # Initialize NLTK components for preprocessing
 ps = PorterStemmer()
