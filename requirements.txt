@@ -4,5 +4,3 @@ pandas
 numpy
 joblib
 nltk
-os
-re
