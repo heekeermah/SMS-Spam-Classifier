@@ -59,11 +59,41 @@ ps = PorterStemmer()
 wordnet_lemmatizer = WordNetLemmatizer()
 # This should now load correctly as data path is set and download attempted
 def preprocess_text(text):
+    import nltk
+    from nltk.corpus import stopwords
+    from nltk.stem import WordNetLemmatizer
+    from nltk.tokenize import word_tokenize
+
     try:
         stop_words = set(stopwords.words('english'))
     except LookupError:
         nltk.download('stopwords', download_dir=NLTK_DATA_DIR)
         stop_words = set(stopwords.words('english'))
+
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        nltk.download('punkt', download_dir=NLTK_DATA_DIR)
+
+    try:
+        nltk.data.find('corpora/wordnet')
+    except LookupError:
+        nltk.download('wordnet', download_dir=NLTK_DATA_DIR)
+
+    wordnet_lemmatizer = WordNetLemmatizer()
+
+    if not isinstance(text, str):
+        return ""
+
+    text = text.lower()
+    words = word_tokenize(text)
+
+    processed_words = []
+    for word in words:
+        if word.isalpha() and word not in stop_words:
+            processed_words.append(wordnet_lemmatizer.lemmatize(word))
+
+    return " ".join(processed_words)
 
 # --- Load Model and Vectorizer ---
 @st.cache_resource # Cache the loading of the model and vectorizer
