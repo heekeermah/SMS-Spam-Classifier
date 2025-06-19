@@ -17,8 +17,8 @@ stop_words = set([
 @st.cache_resource
 def load_classifier_and_vectorizer():
     try:
-        model = joblib.load("spam_classifier.pkl")
-        vectorizer = joblib.load("vectorizer.pkl")
+        model = joblib.load("spam_classifier (2).pkl")
+        vectorizer = joblib.load("vectorizer (1).pkl")
         return model, vectorizer
     except Exception as e:
         st.error(f"Failed to load model or vectorizer: {e}")
